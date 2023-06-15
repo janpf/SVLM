@@ -3,23 +3,23 @@ from sklearn import svm
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import LabelEncoder
 
 # suppose you have your text corpus as a list of sentences
-corpus = ["This is the first sentence.", "This is another sentence."] * 100
+corpus = ["ababababab"] * 100  # big data
 
 # tokenize the corpus characterwise by their ASCII code points
 tokens = [[ord(char) for char in sentence] for sentence in corpus]
 
 # create input subsequences and corresponding next character for every single subsequence of tokens
 contexts, targets = [], []
+
 for sequence in tokens:
     for i in range(1, len(sequence)):
         # Consider only the last 20 characters
         contexts.append(sequence[max(i - 20, 0) : i])
         targets.append(sequence[i])
 
-# flatten the list of contexts to use with CountVectorizer
+## flatten the list of contexts to use with CountVectorizer
 contexts = [" ".join(map(str, context)) for context in contexts]
 
 
@@ -35,21 +35,49 @@ class CustomTransformer:
 
 
 # create a pipeline that uses CountVectorizer and applies the weights
-pipeline = make_pipeline(CountVectorizer(tokenizer=lambda x: x.split(" "), dtype=np.float64), CustomTransformer())
-
+pipeline = make_pipeline(
+    CountVectorizer(tokenizer=lambda x: x.split(" "), dtype=np.float64, ngram_range=(1, 2)),
+    # CustomTransformer(),
+)
 # transform the contexts
 X = pipeline.fit_transform(contexts)
-
 # encode the target characters as integers
-encoder = LabelEncoder()
-y = encoder.fit_transform(targets)
+y = [int(char) for char in targets]
 
 # split into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # create and train the multiclass SVM
-model = svm.SVC(decision_function_shape="ovo")
+model = svm.SVC(
+    decision_function_shape="ovr",
+    kernel="linear",
+)
 model.fit(X_train, y_train)
 
 # make predictions on the test set
-predictions = model.predict(X_test)
+# predictions = model.predict(X_test)
+
+
+def decode(model, pipeline, initial_context, length):
+    text = initial_context
+    for _ in range(length):
+        # Vectorize the current context
+        X = pipeline.transform([text])
+        # Predict the next character
+        prediction = model.predict(X)
+        # Decode the prediction
+        next_char = chr(int(prediction))
+
+        # Add the predicted character to the text
+        text += next_char
+    return text
+
+
+# Use the decoder to generate text
+generated_text = decode(
+    model,
+    pipeline,
+    "a",
+    50,
+)
+print(generated_text)
