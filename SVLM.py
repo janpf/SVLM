@@ -27,7 +27,7 @@ for sequence in tokens:
         contexts.append(sequence[max(i - 20, 0) : i])
         targets.append(sequence[i])
 
-# Transform contexts to a binary matrix representation
+# Transform contexts to a matrix representation
 X = np.zeros((len(contexts), 256))
 # with weights, so that the last character has the highest weight
 weights = [1 / (i + 1) for i in range(max_seq_len)]
@@ -46,7 +46,7 @@ model.fit(X_train, y_train)
 def decode(model, initial_context, length):
     text = initial_context
     for _ in range(length):
-        # Transform the current context into the binary matrix representation
+        # Transform the current context into the matrix representation
         X = np.zeros((1, 256))
         context = [ord(char) for char in text[-20:]]
         for i, ascii_val in enumerate(reversed(context)):
