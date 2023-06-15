@@ -8,7 +8,7 @@ Character-based Autoregressive Language Modelling only using Support Vector Mach
 
 - Context generation: For each character, a context window of the previous N characters is created. These context windows serve as the input sequences for the SVM. (basically GPT)
 
-- Token Embeddings: Each context is represented as a matrix, with each column corresponding to a possible ASCII value (0 to 255). Each entry in a context's row represents the weighted presence of a character in that context.
+- Token Embeddings: Each context is represented as a matrix, with each column corresponding to a timestep and each entry in a context's row represents the weighted presence of a character in that context. The characters are indexed by their ASCII value.
 
 - Token Weighting scheme: A harmonic series is used to weight the presence of characters in a context, with more recent characters having a higher weight.
 
