@@ -1,23 +1,19 @@
+import random
+from random import shuffle
+
 import numpy as np
+from datasets import load_dataset
 from sklearn import svm
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
 max_seq_len = 30
 
-# Suppose you have your text corpus as a list of sentences
-corpus = [
-    "ABABABABA",
-    "CDCDCDCD",
-    "EFEFEFEF",
-    "AAABBBCCCDDD",
-    "ABCDEABCDEABCDE",
-    "AAAABBBBAAAABBBB",
-    "ABCDABCDAB",
-    "ABCCBAABCCBA",
-]
+dataset = load_dataset("amazon_reviews_multi", "de", split="train[:5%]")
+
 
 # Tokenize the corpus characterwise by their ASCII code points
-tokens = [[ord(char) for char in sentence] for sentence in corpus]
+tokens = [[ord(char) for char in sentence] for sentence in dataset["review_body"]]
+tokens = [[t for t in sample if t < 256] for sample in tokens]
 
 # Create input subsequences and corresponding next character for every single subsequence of tokens
 contexts, targets = [], []
@@ -36,11 +32,17 @@ for i, context in enumerate(contexts):
         X[i, ascii_val] += weights[j]
 
 # Split into training and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, targets, test_size=0.2, random_state=42)
+# X_train, X_test, y_train, y_test = train_test_split(X, targets, test_size=0.2, random_state=42)
+random.seed(42)
+tmp = list(zip(X, targets))
+shuffle(tmp)
+X, targets = zip(*tmp)
 
 # Create and train the multiclass SVM
-model = svm.SVC(decision_function_shape="ovo")
-model.fit(X_train, y_train)
+# model = svm.SVC(decision_function_shape="ovo")
+model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=0)
+
+model.fit(X, targets)
 
 
 def decode(model, initial_context, length):
